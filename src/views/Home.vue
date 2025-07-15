@@ -6,7 +6,9 @@
         <div class="flex justify-between items-center py-6">
           <div class="flex items-center space-x-4 rtl:space-x-reverse">
             <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Droplets class="w-8 h-8 text-white" />
+              <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
             </div>
             <div>
               <h1 class="text-2xl font-bold text-gray-900">المنصة الرسمية</h1>
@@ -34,17 +36,29 @@
         </p>
         <div class="grid md:grid-cols-3 gap-8 mt-16">
           <div class="bg-white p-8 rounded-xl shadow-lg">
-            <GraduationCap class="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <div class="w-12 h-12 text-blue-600 mx-auto mb-4 flex items-center justify-center">
+              <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+              </svg>
+            </div>
             <h3 class="text-xl font-semibold mb-3">تعليم متخصص</h3>
             <p class="text-gray-600">مناهج متخصصة في مياه الشرب والصرف الصحي</p>
           </div>
           <div class="bg-white p-8 rounded-xl shadow-lg">
-            <Video class="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <div class="w-12 h-12 text-blue-600 mx-auto mb-4 flex items-center justify-center">
+              <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
             <h3 class="text-xl font-semibold mb-3">محتوى مرئي</h3>
             <p class="text-gray-600">فيديوهات تعليمية عالية الجودة من أفضل المدربين</p>
           </div>
           <div class="bg-white p-8 rounded-xl shadow-lg">
-            <Users class="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <div class="w-12 h-12 text-blue-600 mx-auto mb-4 flex items-center justify-center">
+              <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H16c-.8 0-1.54.37-2 1l-3 4v2h2l2.54-3.4L16.5 18H20zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zM5.5 6c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2zm1.5 2h-2C3.57 8 2.5 9.57 2.5 11.5V22h2v-6h2v6h2v-6.5c0-1.93-1.07-3.5-2.5-3.5z"/>
+              </svg>
+            </div>
             <h3 class="text-xl font-semibold mb-3">تفاعل مباشر</h3>
             <p class="text-gray-600">تواصل مباشر مع المدربين والزملاء</p>
           </div>
@@ -77,7 +91,9 @@
     <footer class="bg-gray-900 text-white py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div class="flex items-center justify-center space-x-4 rtl:space-x-reverse mb-4">
-          <Droplets class="w-8 h-8" />
+          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
           <h4 class="text-xl font-semibold">المنصة الرسمية لطلاب مياه الشرب والصرف الصحي بقنا</h4>
         </div>
         <p class="text-gray-400">جميع الحقوق محفوظة © 2025</p>
@@ -87,5 +103,5 @@
 </template>
 
 <script setup>
-import { Droplets, GraduationCap, Video, Users } from 'lucide-vue-next'
+// تم إزالة استيراد الأيقونات واستبدالها بـ SVG مباشرة
 </script>
