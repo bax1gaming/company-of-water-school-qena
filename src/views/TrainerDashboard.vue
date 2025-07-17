@@ -180,8 +180,8 @@
               </span>
               <span class="flex items-center space-x-2 rtl:space-x-reverse">
                 <Video class="w-4 h-4" />
-              <h2 class="text-2xl font-bold text-gray-900">{{ authStore.profile?.name }}</h2>
-              <p class="text-gray-600">مدرب {{ authStore.profile?.specialization || 'عام' }}</p>
+                <span>{{ cls.videos?.length || 0 }} فيديو</span>
+              </span>
             </div>
           </div>
         </div>
