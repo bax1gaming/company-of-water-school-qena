@@ -26,8 +26,12 @@
     </header>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div v-if="videoData">
-      <div v-if="videoInfo">
+      <div v-if="platformStore.loading" class="text-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="text-gray-600 mt-4">جاري تحميل الفيديو...</p>
+      </div>
+      
+      <div v-else-if="videoInfo">
         <!-- Video Player -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
           <div class="aspect-video bg-gray-900 flex items-center justify-center">
@@ -100,16 +104,9 @@
       </div>
       
       <div v-else class="text-center py-12">
-        <div class="animate-pulse" v-if="!videoInfo">
-          <div class="w-16 h-16 bg-gray-200 rounded mx-auto mb-4"></div>
-          <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-2"></div>
-          <div class="h-4 bg-gray-200 rounded w-1/3 mx-auto"></div>
-        </div>
-        <div v-else class="text-center py-12">
         <Video class="w-16 h-16 text-gray-300 mx-auto mb-4" />
         <h3 class="text-lg font-semibold text-gray-900 mb-2">الفيديو غير موجود</h3>
         <p class="text-gray-600">لم يتم العثور على الفيديو المطلوب</p>
-        </div>
       </div>
     </div>
   </div>
@@ -137,10 +134,6 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const platformStore = usePlatformStore()
-
-const videoData = computed(() => {
-  return null // Will be loaded asynchronously
-})
 
 const videoInfo = ref(null)
 
