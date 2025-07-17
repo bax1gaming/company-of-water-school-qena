@@ -9,8 +9,8 @@
             <div>
               <h1 class="text-xl font-semibold text-gray-900">لوحة الطالب</h1>
               <p class="text-sm text-gray-600">مرحباً {{ authStore.user?.name }}</p>
-            </div>
-          </div>
+              <h2 class="text-2xl font-bold text-gray-900">{{ authStore.profile?.name }}</h2>
+              <p class="text-gray-600">{{ authStore.profile?.class_name }}</p>
           <button
             @click="logout"
             class="text-gray-600 hover:text-gray-900 flex items-center space-x-2 rtl:space-x-reverse"
@@ -72,7 +72,7 @@
             :key="cls.id"
             class="border-2 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer"
             :class="[
-              authStore.user?.class === cls.id 
+              authStore.profile?.class === cls.id 
                 ? 'border-blue-500 bg-blue-50' 
                 : 'border-gray-200 hover:border-blue-300'
             ]"
@@ -81,13 +81,13 @@
             <div class="text-center">
               <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
                    :class="[
-                     authStore.user?.class === cls.id 
+                     authStore.profile?.class === cls.id 
                        ? 'bg-blue-100' 
                        : 'bg-gray-100'
                    ]">
                 <BookOpen class="w-8 h-8" 
                          :class="[
-                           authStore.user?.class === cls.id 
+                           authStore.profile?.class === cls.id 
                              ? 'text-blue-600' 
                              : 'text-gray-600'
                          ]" />
@@ -104,7 +104,7 @@
                   <span>{{ cls.videos.length }}</span>
                 </span>
               </div>
-              <div v-if="authStore.user?.class === cls.id" class="mt-3">
+              <div v-if="authStore.profile?.class === cls.id" class="mt-3">
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   صفي الدراسي
                 </span>
@@ -138,8 +138,8 @@ const authStore = useAuthStore()
 const platformStore = usePlatformStore()
 
 const studentClass = computed(() => {
-  if (authStore.user?.class) {
-    return platformStore.getClassById(authStore.user.class)
+  if (authStore.profile?.class) {
+    return platformStore.getClassById(authStore.profile.class)
   }
   return null
 })

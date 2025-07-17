@@ -1,109 +1,121 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { db } from '../lib/supabase'
+import { useAuthStore } from './auth'
 
 export const usePlatformStore = defineStore('platform', () => {
-  const announcements = ref([
-    {
-      id: 1,
-      title: 'إعلان هام: بداية الفصل الدراسي الجديد',
-      content: 'يسعدنا أن نعلن عن بداية الفصل الدراسي الجديد. نتمنى لجميع الطلاب التوفيق والنجاح.',
-      date: '2025-01-15',
-      author: 'إدارة المنصة'
-    },
-    {
-      id: 2,
-      title: 'تحديث المناهج الدراسية',
-      content: 'تم تحديث المناهج الدراسية لتواكب أحدث التطورات في مجال مياه الشرب والصرف الصحي.',
-      date: '2025-01-10',
-      author: 'إدارة المنصة'
-    }
-  ])
+  const announcements = ref([])
+  const classes = ref([])
+  const videos = ref([])
+  const loading = ref(false)
 
-  const classes = ref([
-    {
-      id: 'first-general',
-      name: 'الصف الأول - تخصص عام',
-      description: 'المبادئ الأساسية في هندسة المياه والصرف الصحي',
-      students: 45,
-      videos: [
-        {
-          id: 1,
-          title: 'مقدمة في هندسة المياه',
-          duration: '45:30',
-          uploadDate: '2025-01-10',
-          trainer: 'د. محمد أحمد'
-        },
-        {
-          id: 2,
-          title: 'أساسيات الصرف الصحي',
-          duration: '38:15',
-          uploadDate: '2025-01-08',
-          trainer: 'د. سارة محمود'
-        }
-      ]
-    },
-    {
-      id: 'second-water',
-      name: 'الصف الثاني - تخصص مياه شرب',
-      description: 'تقنيات معالجة وتوزيع مياه الشرب',
-      students: 32,
-      videos: [
-        {
-          id: 3,
-          title: 'عمليات معالجة المياه',
-          duration: '52:20',
-          uploadDate: '2025-01-12',
-          trainer: 'د. أحمد علي'
-        }
-      ]
-    },
-    {
-      id: 'second-sewage',
-      name: 'الصف الثاني - تخصص صرف صحي',
-      description: 'أنظمة جمع ومعالجة مياه الصرف الصحي',
-      students: 28,
-      videos: [
-        {
-          id: 4,
-          title: 'تصميم شبكات الصرف الصحي',
-          duration: '41:45',
-          uploadDate: '2025-01-11',
-          trainer: 'د. فاطمة حسن'
-        }
-      ]
-    },
-    {
-      id: 'third-water',
-      name: 'الصف الثالث - تخصص مياه شرب',
-      description: 'تخصص مياه شرب - المستوى المتقدم',
-      students: 25,
-      videos: []
-    },
-    {
-      id: 'third-sewage',
-      name: 'الصف الثالث - تخصص صرف صحي',
-      description: 'تخصص صرف صحي - المستوى المتقدم',
-      students: 22,
-      videos: []
+  const loadAnnouncements = async () => {
+    try {
+      loading.value = true
+      const data = await db.getAnnouncements()
+      announcements.value = data
+    } catch (error) {
+      console.error('Error loading announcements:', error)
+    } finally {
+      loading.value = false
     }
-  ])
-
-  const addAnnouncement = (announcement) => {
-    announcements.value.unshift({
-      id: Date.now(),
-      ...announcement,
-      date: new Date().toISOString().split('T')[0]
-    })
   }
 
-  const addVideo = (classId, video) => {
-    const classIndex = classes.value.findIndex(c => c.id === classId)
-    if (classIndex !== -1) {
-      classes.value[classIndex].videos.push({
-        id: Date.now(),
-        ...video,
-        uploadDate: new Date().toISOString().split('T')[0]
-      })
+  const loadClasses = async () => {
+    try {
+      loading.value = true
+      const data = await db.getClasses()
+      
+      // Load videos for each class
+      const classesWithVideos = await Promise.all(
+        data.map(async (cls) => {
+          const classVideos = await db.getVideosByClass(cls.id)
+          return {
+            ...cls,
+            videos: classVideos,
+            students: cls.students_count
+          }
+        })
+      )
+      
+      classes.value = classesWithVideos
+    } catch (error) {
+      console.error('Error loading classes:', error)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const loadVideos = async () => {
+    try {
+      loading.value = true
+      const data = await db.getVideos()
+      videos.value = data
+    } catch (error) {
+      console.error('Error loading videos:', error)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const addAnnouncement = async (announcement) => {
+    try {
+      const authStore = useAuthStore()
+      const announcementData = {
+        title: announcement.title,
+        content: announcement.content,
+        author_id: authStore.profile.id,
+        author_name: authStore.profile.name
+      }
+      
+      const newAnnouncement = await db.createAnnouncement(announcementData)
+      announcements.value.unshift(newAnnouncement)
+      return { success: true }
+    } catch (error) {
+      console.error('Error adding announcement:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  const deleteAnnouncement = async (announcementId) => {
+    try {
+      await db.deleteAnnouncement(announcementId)
+      const index = announcements.value.findIndex(a => a.id === announcementId)
+      if (index !== -1) {
+        announcements.value.splice(index, 1)
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting announcement:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
+  const addVideo = async (classId, video) => {
+    try {
+      const authStore = useAuthStore()
+      const videoData = {
+        title: video.title,
+        class_id: classId,
+        trainer_id: authStore.profile.id,
+        trainer_name: authStore.profile.name,
+        duration: video.duration,
+        video_url: video.videoUrl || null,
+        file_name: video.fileName || null
+      }
+      
+      const newVideo = await db.createVideo(videoData)
+      
+      // Update local classes data
+      const classIndex = classes.value.findIndex(c => c.id === classId)
+      if (classIndex !== -1) {
+        classes.value[classIndex].videos.push(newVideo)
+      }
+      
+      return { success: true }
+    } catch (error) {
+      console.error('Error adding video:', error)
+      return { success: false, error: error.message }
     }
   }
 
@@ -111,20 +123,44 @@ export const usePlatformStore = defineStore('platform', () => {
     return classes.value.find(c => c.id === id)
   }
 
-  const getVideoById = (id) => {
-    for (const cls of classes.value) {
-      const video = cls.videos.find(v => v.id == id)
-      if (video) return video
+  const getVideoById = async (id) => {
+    try {
+      // First check if video is in local cache
+      for (const cls of classes.value) {
+        const video = cls.videos.find(v => v.id == id)
+        if (video) return video
+      }
+      
+      // If not found locally, fetch from database
+      const video = await db.getVideoById(id)
+      return video
+    } catch (error) {
+      console.error('Error getting video:', error)
+      return null
     }
-    return null
+  }
+
+  const initializePlatform = async () => {
+    await Promise.all([
+      loadAnnouncements(),
+      loadClasses(),
+      loadVideos()
+    ])
   }
 
   return {
     announcements,
     classes,
+    videos,
+    loading,
+    loadAnnouncements,
+    loadClasses,
+    loadVideos,
     addAnnouncement,
+    deleteAnnouncement,
     addVideo,
     getClassById,
-    getVideoById
+    getVideoById,
+    initializePlatform
   }
 })

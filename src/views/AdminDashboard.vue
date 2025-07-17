@@ -8,7 +8,7 @@
             <Droplets class="w-8 h-8 text-blue-600" />
             <div>
               <h1 class="text-xl font-semibold text-gray-900">لوحة الإدارة</h1>
-              <p class="text-sm text-gray-600">مرحباً {{ authStore.user?.name }}</p>
+              <p class="text-sm text-gray-600">مرحباً {{ authStore.profile?.name }}</p>
             </div>
           </div>
           <button
@@ -209,24 +209,26 @@ const logout = () => {
   router.push('/')
 }
 
-const addAnnouncement = () => {
-  platformStore.addAnnouncement({
+const addAnnouncement = async () => {
+  const result = await platformStore.addAnnouncement({
     title: newAnnouncement.value.title,
-    content: newAnnouncement.value.content,
-    author: authStore.user.name
+    content: newAnnouncement.value.content
   })
   
-  // Reset form
-  newAnnouncement.value = { title: '', content: '' }
-  
-  alert('تم نشر الإعلان بنجاح!')
+  if (result.success) {
+    // Reset form
+    newAnnouncement.value = { title: '', content: '' }
+    alert('تم نشر الإعلان بنجاح!')
+  } else {
+    alert('حدث خطأ أثناء نشر الإعلان')
+  }
 }
 
-const deleteAnnouncement = (id) => {
+const deleteAnnouncement = async (id) => {
   if (confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
-    const index = platformStore.announcements.findIndex(a => a.id === id)
-    if (index !== -1) {
-      platformStore.announcements.splice(index, 1)
+    const result = await platformStore.deleteAnnouncement(id)
+    if (!result.success) {
+      alert('حدث خطأ أثناء حذف الإعلان')
     }
   }
 }

@@ -1,145 +1,168 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { supabase, db } from '../lib/supabase'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
-  const isAuthenticated = computed(() => !!user.value)
+  const profile = ref(null)
+  const loading = ref(false)
+  const isAuthenticated = computed(() => !!user.value && !!profile.value)
 
-  // Mock users data
-  const mockUsers = [
-    {
-      id: 1,
-      username: 'student1',
-      password: '123456',
-      studentCode: 'ST001',
-      phone: '01234567890',
-      email: 'student1@example.com',
-      role: 'student',
-      name: 'أحمد محمد',
-      class: 'first-general',
-      className: 'الصف الأول - تخصص عام'
-    },
-    {
-      id: 2,
-      username: 'student2',
-      password: '123456',
-      studentCode: 'ST002',
-      phone: '01234567891',
-      email: 'student2@example.com',
-      role: 'student',
-      name: 'فاطمة علي',
-      class: 'second-water',
-      className: 'الصف الثاني - تخصص مياه شرب'
-    },
-    {
-      id: 5,
-      username: 'student3',
-      password: '123456',
-      studentCode: 'ST003',
-      phone: '01234567892',
-      email: 'student3@example.com',
-      role: 'student',
-      name: 'محمد حسن',
-      class: 'second-sewage',
-      className: 'الصف الثاني - تخصص صرف صحي'
-    },
-    {
-      id: 6,
-      username: 'student4',
-      password: '123456',
-      studentCode: 'ST004',
-      phone: '01234567893',
-      email: 'student4@example.com',
-      role: 'student',
-      name: 'سارة أحمد',
-      class: 'third-water',
-      className: 'الصف الثالث - تخصص مياه شرب'
-    },
-    {
-      id: 7,
-      username: 'student5',
-      password: '123456',
-      studentCode: 'ST005',
-      phone: '01234567894',
-      email: 'student5@example.com',
-      role: 'student',
-      name: 'عمر محمود',
-      class: 'third-sewage',
-      className: 'الصف الثالث - تخصص صرف صحي'
-    },
-    {
-      id: 3,
-      username: 'trainer1',
-      password: '123456',
-      role: 'trainer',
-      name: 'د. محمد أحمد',
-      specialization: 'مياه الشرب'
-    },
-    {
-      id: 4,
-      username: 'admin',
-      password: '123456',
-      role: 'admin',
-      name: 'مدير المنصة'
+  const initAuth = async () => {
+    try {
+      loading.value = true
+      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (session?.user) {
+        user.value = session.user
+        await loadProfile()
+      }
+
+      // Listen for auth changes
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          user.value = session.user
+          await loadProfile()
+        } else if (event === 'SIGNED_OUT') {
+          user.value = null
+          profile.value = null
+        }
+      })
+    } catch (error) {
+      console.error('Error initializing auth:', error)
+    } finally {
+      loading.value = false
     }
-  ]
+  }
 
-  const login = (identifier, password) => {
-    const foundUser = mockUsers.find(u => 
-      (u.username === identifier || 
-       u.studentCode === identifier || 
-       u.phone === identifier || 
-       u.email === identifier) && 
-      u.password === password
-    )
-    if (foundUser) {
-      user.value = { ...foundUser }
-      localStorage.setItem('user', JSON.stringify(foundUser))
+  const loadProfile = async () => {
+    if (!user.value) return
+
+    try {
+      const profileData = await db.getProfile(user.value.id)
+      profile.value = profileData
+    } catch (error) {
+      console.error('Error loading profile:', error)
+    }
+  }
+
+  const login = async (identifier, password) => {
+    try {
+      loading.value = true
+      
+      // Try to sign in with email first
+      let { data, error } = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password: password
+      })
+
+      // If email login fails, try to find user by other identifiers
+      if (error && error.message.includes('Invalid login credentials')) {
+        // Find user by username, student_code, or phone
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('email')
+          .or(`username.eq.${identifier},student_code.eq.${identifier},phone.eq.${identifier}`)
+          .single()
+
+        if (profiles?.email) {
+          const result = await supabase.auth.signInWithPassword({
+            email: profiles.email,
+            password: password
+          })
+          data = result.data
+          error = result.error
+        }
+      }
+
+      if (error) throw error
+
+      user.value = data.user
+      await loadProfile()
       return true
+    } catch (error) {
+      console.error('Login error:', error)
+      return false
+    } finally {
+      loading.value = false
     }
-    return false
   }
 
-  const signup = (userData) => {
-    // Check if user already exists
-    const existingUser = mockUsers.find(u => 
-      u.username === userData.username || 
-      u.studentCode === userData.studentCode || 
-      u.phone === userData.phone || 
-      u.email === userData.email
-    )
-    
-    if (existingUser) {
-      return { success: false, message: 'المستخدم موجود بالفعل' }
-    }
+  const signup = async (userData) => {
+    try {
+      loading.value = true
 
-    const newUser = {
-      id: mockUsers.length + 1,
-      ...userData,
-      role: 'student'
+      // Check if user already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .or(`username.eq.${userData.username},student_code.eq.${userData.studentCode},phone.eq.${userData.phone},email.eq.${userData.email}`)
+        .single()
+
+      if (existingProfile) {
+        return { success: false, message: 'المستخدم موجود بالفعل' }
+      }
+
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password
+      })
+
+      if (authError) throw authError
+
+      if (authData.user) {
+        // Create profile
+        const profileData = {
+          user_id: authData.user.id,
+          email: userData.email,
+          username: userData.username,
+          student_code: userData.studentCode,
+          phone: userData.phone,
+          name: userData.name,
+          role: 'student',
+          class: userData.class,
+          class_name: userData.className
+        }
+
+        await db.createProfile(profileData)
+
+        // Auto-enroll student in their class
+        if (userData.class) {
+          await db.enrollStudent(profileData.user_id, userData.class)
+        }
+
+        return { success: true, message: 'تم إنشاء الحساب بنجاح' }
+      }
+    } catch (error) {
+      console.error('Signup error:', error)
+      return { success: false, message: 'حدث خطأ أثناء إنشاء الحساب' }
+    } finally {
+      loading.value = false
     }
-    
-    mockUsers.push(newUser)
-    return { success: true, message: 'تم إنشاء الحساب بنجاح' }
-  }
-  const logout = () => {
-    user.value = null
-    localStorage.removeItem('user')
   }
 
-  const initAuth = () => {
-    const savedUser = localStorage.getItem('user')
-    if (savedUser) {
-      user.value = JSON.parse(savedUser)
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut()
+      user.value = null
+      profile.value = null
+    } catch (error) {
+      console.error('Logout error:', error)
     }
   }
 
   return {
     user,
+    profile,
+    loading,
     isAuthenticated,
     login,
     signup,
     logout,
-    initAuth
+    initAuth,
+    loadProfile
   }
 })

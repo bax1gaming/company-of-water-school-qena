@@ -180,8 +180,8 @@
               </span>
               <span class="flex items-center space-x-2 rtl:space-x-reverse">
                 <Video class="w-4 h-4" />
-                <span>{{ cls.videos.length }} فيديو</span>
-              </span>
+              <h2 class="text-2xl font-bold text-gray-900">{{ authStore.profile?.name }}</h2>
+              <p class="text-gray-600">مدرب {{ authStore.profile?.specialization || 'عام' }}</p>
             </div>
           </div>
         </div>
@@ -228,7 +228,7 @@ const handleFileSelect = (event) => {
   selectedFile.value = event.target.files[0]
 }
 
-const uploadVideo = () => {
+const uploadVideo = async () => {
   if (uploadMethod.value === 'file' && !selectedFile.value) {
     alert('يرجى اختيار ملف فيديو')
     return
@@ -242,19 +242,23 @@ const uploadVideo = () => {
   const video = {
     title: newVideo.value.title,
     duration: newVideo.value.duration,
-    trainer: authStore.user.name,
+    trainer: authStore.profile.name,
     videoUrl: uploadMethod.value === 'url' ? newVideo.value.videoUrl : null,
     fileName: uploadMethod.value === 'file' ? selectedFile.value?.name : null
   }
 
-  platformStore.addVideo(newVideo.value.classId, video)
+  const result = await platformStore.addVideo(newVideo.value.classId, video)
   
-  // Reset form
-  newVideo.value = { title: '', classId: '', duration: '', videoUrl: '' }
-  selectedFile.value = null
-  uploadMethod.value = 'file'
-  
-  alert('تم رفع الفيديو بنجاح!')
+  if (result.success) {
+    // Reset form
+    newVideo.value = { title: '', classId: '', duration: '', videoUrl: '' }
+    selectedFile.value = null
+    uploadMethod.value = 'file'
+    
+    alert('تم رفع الفيديو بنجاح!')
+  } else {
+    alert('حدث خطأ أثناء رفع الفيديو')
+  }
 }
 
 const viewClass = (classId) => {

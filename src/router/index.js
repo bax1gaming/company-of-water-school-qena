@@ -63,7 +63,7 @@ router.beforeEach((to, from, next) => {
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
-  } else if (to.meta.role && authStore.user?.role !== to.meta.role) {
+  } else if (to.meta.role && authStore.profile?.role !== to.meta.role) {
     next('/')
   } else {
     next()

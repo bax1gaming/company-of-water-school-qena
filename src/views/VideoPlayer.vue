@@ -27,13 +27,14 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div v-if="videoData">
+      <div v-if="videoInfo">
         <!-- Video Player -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
           <div class="aspect-video bg-gray-900 flex items-center justify-center">
             <!-- YouTube/Vimeo Embed -->
-            <div v-if="videoData.videoUrl && isValidVideoUrl(videoData.videoUrl)" class="w-full h-full">
+            <div v-if="videoInfo?.video_url && isValidVideoUrl(videoInfo.video_url)" class="w-full h-full">
               <iframe
-                :src="getEmbedUrl(videoData.videoUrl)"
+                :src="getEmbedUrl(videoInfo.video_url)"
                 class="w-full h-full"
                 frameborder="0"
                 allowfullscreen
@@ -43,13 +44,13 @@
             <!-- Placeholder for file uploads or invalid URLs -->
             <div v-else class="text-center text-white">
               <Play class="w-16 h-16 mx-auto mb-4" />
-              <h3 class="text-xl font-semibold mb-2">{{ videoData.title }}</h3>
+              <h3 class="text-xl font-semibold mb-2">{{ videoInfo?.title }}</h3>
               <p class="text-gray-300">
-                {{ videoData.fileName ? 'ملف فيديو محلي' : 'مشغل الفيديو (تجريبي)' }}
+                {{ videoInfo?.file_name ? 'ملف فيديو محلي' : 'مشغل الفيديو (تجريبي)' }}
               </p>
-              <p class="text-sm text-gray-400 mt-2">المدة: {{ videoData.duration }}</p>
-              <p v-if="videoData.fileName" class="text-sm text-gray-400">
-                الملف: {{ videoData.fileName }}
+              <p class="text-sm text-gray-400 mt-2">المدة: {{ videoInfo?.duration }}</p>
+              <p v-if="videoInfo?.file_name" class="text-sm text-gray-400">
+                الملف: {{ videoInfo.file_name }}
               </p>
             </div>
           </div>
@@ -59,19 +60,19 @@
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div class="flex items-start justify-between mb-4">
             <div>
-              <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ videoData.title }}</h2>
+              <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ videoInfo?.title }}</h2>
               <div class="flex items-center space-x-4 rtl:space-x-reverse text-gray-600">
                 <span class="flex items-center space-x-2 rtl:space-x-reverse">
                   <UserCheck class="w-5 h-5" />
-                  <span>{{ videoData.trainer }}</span>
+                  <span>{{ videoInfo?.trainer_name }}</span>
                 </span>
                 <span class="flex items-center space-x-2 rtl:space-x-reverse">
                   <Clock class="w-5 h-5" />
-                  <span>{{ videoData.duration }}</span>
+                  <span>{{ videoInfo?.duration }}</span>
                 </span>
                 <span class="flex items-center space-x-2 rtl:space-x-reverse">
                   <Calendar class="w-5 h-5" />
-                  <span>{{ videoData.uploadDate }}</span>
+                  <span>{{ videoInfo?.upload_date }}</span>
                 </span>
               </div>
             </div>
@@ -99,16 +100,23 @@
       </div>
       
       <div v-else class="text-center py-12">
+        <div class="animate-pulse" v-if="!videoInfo">
+          <div class="w-16 h-16 bg-gray-200 rounded mx-auto mb-4"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/3 mx-auto"></div>
+        </div>
+        <div v-else class="text-center py-12">
         <Video class="w-16 h-16 text-gray-300 mx-auto mb-4" />
         <h3 class="text-lg font-semibold text-gray-900 mb-2">الفيديو غير موجود</h3>
         <p class="text-gray-600">لم يتم العثور على الفيديو المطلوب</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { usePlatformStore } from '../stores/platform'
@@ -131,7 +139,17 @@ const authStore = useAuthStore()
 const platformStore = usePlatformStore()
 
 const videoData = computed(() => {
-  return platformStore.getVideoById(route.params.videoId)
+  return null // Will be loaded asynchronously
+})
+
+const videoInfo = ref(null)
+
+onMounted(async () => {
+  try {
+    videoInfo.value = await platformStore.getVideoById(route.params.videoId)
+  } catch (error) {
+    console.error('Error loading video:', error)
+  }
 })
 
 const isValidVideoUrl = (url) => {

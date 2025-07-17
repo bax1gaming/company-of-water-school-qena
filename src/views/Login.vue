@@ -191,10 +191,12 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { usePlatformStore } from '../stores/platform'
 import { Droplets } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const platformStore = usePlatformStore()
 
 const isSignup = ref(false)
 const identifier = ref('')
@@ -243,15 +245,17 @@ const toggleMode = () => {
   success.value = ''
 }
 const handleLogin = async () => {
-  loading.value = true
   error.value = ''
 
   try {
-    const loginSuccess = authStore.login(identifier.value, password.value)
+    const loginSuccess = await authStore.login(identifier.value, password.value)
     
     if (loginSuccess) {
-      const user = authStore.user
-      switch (user.role) {
+      // Load platform data after successful login
+      await platformStore.initializePlatform()
+      
+      const profile = authStore.profile
+      switch (profile.role) {
         case 'student':
           router.push('/student')
           break
@@ -269,13 +273,10 @@ const handleLogin = async () => {
     }
   } catch (err) {
     error.value = 'حدث خطأ أثناء تسجيل الدخول'
-  } finally {
-    loading.value = false
   }
 }
 
 const handleSignup = async () => {
-  loading.value = true
   error.value = ''
   success.value = ''
 
@@ -309,8 +310,6 @@ const handleSignup = async () => {
     }
   } catch (err) {
     error.value = 'حدث خطأ أثناء إنشاء الحساب'
-  } finally {
-    loading.value = false
   }
 }
 </script>
