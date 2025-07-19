@@ -32,7 +32,55 @@ const authStore = useAuthStore()
 const platformStore = usePlatformStore()
 
 onMounted(async () => {
-  await authStore.initAuth()
+  try {
+    await authStore.initAuth()
+    
+    // Initialize platform data if user is authenticated
+    if (authStore.isAuthenticated) {
+      await platformStore.initializeData()
+    }
+  } catch (error) {
+    console.error('Error initializing app:', error)
+  }
+})
+</script>
+
+<style>
+.font-arabic {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure proper rendering */
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  width: 100%;
+}
+</style>
+</script>
+
+<style>
+.font-arabic {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+* {
+  box-sizing: border-box;
+}
+</style>
   
   // Initialize platform data if user is authenticated
   if (authStore.isAuthenticated) {

@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="المنصة الرسمية لطلاب مياه الشرب والصرف الصحي بقنا" />
+    <meta name="robots" content="index, follow" />
     <title>المنصة الرسمية لطلاب مياه الشرب والصرف الصحي بقنا</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -17,6 +19,16 @@
         }
       }
     </script>
+    <style>
+      /* Prevent flash of unstyled content */
+      #app {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      #app.loaded {
+        opacity: 1;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>

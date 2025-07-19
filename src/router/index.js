@@ -44,11 +44,15 @@ const routes = [
     name: 'VideoPlayer',
     component: VideoPlayer,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
   }
 ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory('/'),
   routes
 })
 
