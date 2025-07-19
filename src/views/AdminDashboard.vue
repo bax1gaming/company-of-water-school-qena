@@ -209,7 +209,7 @@ const logout = () => {
   router.push('/')
 }
 
-const addAnnouncement = () => {
+const addAnnouncement = async () => {
   const result = await platformStore.addAnnouncement({
     title: newAnnouncement.value.title,
     content: newAnnouncement.value.content,
