@@ -194,6 +194,59 @@ import { useAuthStore } from '../stores/auth'
 import { Droplets } from 'lucide-vue-next'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
+const isSignup = ref(false)
+const loading = ref(false)
+const error = ref('')
+const success = ref('')
+
+// Login form data
+const identifier = ref('')
+const password = ref('')
+
+// Signup form data
+const signupData = ref({
+  name: '',
+  username: '',
+  studentCode: '',
+  phone: '',
+  email: '',
+  class: '',
+  password: ''
+})
+
+const passwordModel = computed({
+  get: () => isSignup.value ? signupData.value.password : password.value,
+  set: (value) => {
+    if (isSignup.value) {
+      signupData.value.password = value
+    } else {
+      password.value = value
+    }
+  }
+})
+
+const toggleMode = () => {
+  isSignup.value = !isSignup.value
+  error.value = ''
+  success.value = ''
+}
+
+const getClassNameById = (classId) => {
+  const classMap = {
+    'first-general': 'الصف الأول - تخصص عام',
+    'second-water': 'الصف الثاني - تخصص مياه شرب',
+    'second-sewage': 'الصف الثاني - تخصص صرف صحي',
+    'third-water': 'الصف الثالث - تخصص مياه شرب',
+    'third-sewage': 'الصف الثالث - تخصص صرف صحي'
+  }
+  return classMap[classId] || classId
+}
+
+const handleLogin = async () => {
+  loading.value = true
+  try {
     error.value = ''
     
     const result = await authStore.login(identifier.value, password.value)
@@ -203,43 +256,6 @@ const router = useRouter()
       const user = authStore.user
       switch (user?.role) {
         case 'student':
-          router.push('/student')
-          break
-        case 'trainer':
-          router.push('/trainer')
-    error.value = ''
-    success.value = ''
-
-    const userData = {
-      ...signupData.value,
-      className: getClassNameById(signupData.value.class)
-    }
-    
-    const result = await authStore.signup(userData)
-    
-    if (result.success) {
-      success.value = result.message
-      // Reset form
-      signupData.value = {
-        name: '',
-        username: '',
-        studentCode: '',
-        phone: '',
-        email: '',
-        class: '',
-        password: ''
-      }
-      // Switch to login mode after 2 seconds
-      setTimeout(() => {
-        isSignup.value = false
-        success.value = ''
-      }, 2000)
-    } else {
-      error.value = result.message
-    }
-  }
-})
-
           router.push('/student')
           break
         case 'trainer':
@@ -263,16 +279,16 @@ const router = useRouter()
 
 const handleSignup = async () => {
   loading.value = true
-  error.value = ''
-  success.value = ''
-
   try {
+    error.value = ''
+    success.value = ''
+
     const userData = {
       ...signupData.value,
       className: getClassNameById(signupData.value.class)
     }
     
-    const result = authStore.signup(userData)
+    const result = await authStore.signup(userData)
     
     if (result.success) {
       success.value = result.message
