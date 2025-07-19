@@ -97,17 +97,23 @@ export const useAuthStore = defineStore('auth', () => {
   const signup = async (userData) => {
     try {
       loading.value = true
+      
+      console.log('Starting signup process...', userData)
 
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
-          emailRedirectTo: window.location.origin
+          emailRedirectTo: window.location.origin,
+          data: {
+            role: 'student'
+          }
         }
       })
 
       if (authError) throw authError
+      console.log('Auth user created:', authData)
 
       if (!authData.user) {
         throw new Error('فشل في إنشاء المستخدم')
@@ -129,7 +135,12 @@ export const useAuthStore = defineStore('auth', () => {
         })
         .select()
 
-      if (profileError) throw profileError
+      if (profileError) {
+        console.error('Profile creation error:', profileError)
+        throw profileError
+      }
+      
+      console.log('Profile created successfully:', profileData)
 
       return { 
         success: true, 
