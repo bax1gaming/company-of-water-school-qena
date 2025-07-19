@@ -11,46 +11,15 @@ export const usePlatformStore = defineStore('platform', () => {
   const fetchAnnouncements = async () => {
     try {
       loading.value = true
-      
-      // Add mock data for demo purposes
-      const mockAnnouncements = [
-        {
-          id: '1',
-          title: 'مرحباً بكم في المنصة التعليمية',
-          content: 'نرحب بجميع الطلاب في منصة التعلم الإلكتروني الجديدة',
-          author: 'إدارة المنصة',
-          date: '2025-01-19',
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          title: 'بدء الفصل الدراسي الجديد',
-          content: 'يبدأ الفصل الدراسي الجديد يوم الأحد القادم',
-          author: 'إدارة المنصة',
-          date: '2025-01-18',
-          created_at: new Date().toISOString()
-        }
-      ]
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-      try {
-        const { data, error } = await supabase
-          .from('announcements')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (error) {
-          console.warn('Could not fetch announcements from database, using mock data:', error)
-          announcements.value = mockAnnouncements
-        } else {
-          announcements.value = data && data.length > 0 ? data : mockAnnouncements
-        }
-      } catch (dbError) {
-        console.warn('Database connection failed, using mock data:', dbError)
-        announcements.value = mockAnnouncements
-      }
+      if (error) throw error
+      announcements.value = data || []
     } catch (error) {
-      console.warn('Error fetching announcements:', error)
-      announcements.value = []
+      console.error('Error fetching announcements:', error)
     } finally {
       loading.value = false
     }
@@ -59,18 +28,86 @@ export const usePlatformStore = defineStore('platform', () => {
   const fetchClasses = async () => {
     try {
       loading.value = true
-      const { data, error } = await supabase
-        .from('classes')
-        .select(`
-          *,
-          videos (*)
-        `)
-        .order('created_at', { ascending: true })
+      
+      // Add mock data for demo purposes
+      const mockClasses = [
+        {
+          id: 'first-general',
+          name: 'الصف الأول - تخصص عام',
+          description: 'المبادئ الأساسية في هندسة المياه والصرف الصحي',
+          students: 45,
+          videos: [
+            {
+              id: 'video-1',
+              title: 'مقدمة في هندسة المياه',
+              duration: '45:30',
+              trainer: 'د. أحمد محمد',
+              uploadDate: '2025-01-15',
+              videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            }
+          ]
+        },
+        {
+          id: 'second-water',
+          name: 'الصف الثاني - تخصص مياه شرب',
+          description: 'تقنيات معالجة وتوزيع مياه الشرب',
+          students: 38,
+          videos: [
+            {
+              id: 'video-2',
+              title: 'معالجة مياه الشرب',
+              duration: '52:15',
+              trainer: 'د. فاطمة علي',
+              uploadDate: '2025-01-16',
+              videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            }
+          ]
+        },
+        {
+          id: 'second-sewage',
+          name: 'الصف الثاني - تخصص صرف صحي',
+          description: 'أنظمة جمع ومعالجة مياه الصرف الصحي',
+          students: 42,
+          videos: []
+        },
+        {
+          id: 'third-water',
+          name: 'الصف الثالث - تخصص مياه شرب',
+          description: 'تخصص مياه شرب - المستوى المتقدم',
+          students: 35,
+          videos: []
+        },
+        {
+          id: 'third-sewage',
+          name: 'الصف الثالث - تخصص صرف صحي',
+          description: 'تخصص صرف صحي - المستوى المتقدم',
+          students: 40,
+          videos: []
+        }
+      ]
 
-      if (error) throw error
-      classes.value = data || []
+      try {
+        const { data, error } = await supabase
+          .from('classes')
+          .select(`
+            *,
+            videos (*)
+          `)
+          .order('created_at', { ascending: true })
+
+        if (error) {
+          console.warn('Could not fetch classes from database, using mock data:', error)
+          classes.value = mockClasses
+        } else {
+          classes.value = data && data.length > 0 ? data : mockClasses
+        }
+      } catch (dbError) {
+        console.warn('Database connection failed, using mock data:', dbError)
+        classes.value = mockClasses
+      }
     } catch (error) {
-      console.error('Error fetching classes:', error)
+      console.warn('Error fetching classes:', error)
+      classes.value = []
     } finally {
       loading.value = false
     }

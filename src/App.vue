@@ -25,12 +25,11 @@ onMounted(async () => {
     // Initialize auth first
     await authStore.initAuth()
     
-    // Initialize platform data if user is authenticated
-    if (authStore.isAuthenticated) {
-      await platformStore.initializeData()
-    }
+    // Initialize platform data regardless of auth status for demo
+    await platformStore.initializeData()
   } catch (error) {
-    console.error('Error initializing app:', error)
+    console.warn('Error initializing app:', error)
+    // Don't block the app from loading
   } finally {
     loading.value = false
   }
