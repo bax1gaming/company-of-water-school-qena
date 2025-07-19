@@ -98,28 +98,13 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
 
-      // Check if user already exists
-      try {
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .or(`username.eq.${userData.username},student_code.eq.${userData.studentCode},phone.eq.${userData.phone},email.eq.${userData.email}`)
-          .single()
-
-        if (existingUser) {
-          throw new Error('المستخدم موجود بالفعل')
-        }
-      } catch (error) {
-        // If no existing user found, continue with signup
-        if (!error.message.includes('No rows')) {
-          throw error
-        }
-      }
-
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
-        password: userData.password
+        password: userData.password,
+        options: {
+          emailRedirectTo: window.location.origin
+        }
       })
 
       if (authError) throw authError
@@ -128,8 +113,8 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('فشل في إنشاء المستخدم')
       }
 
-      // Create user profile
-      const { error: profileError } = await supabase
+      // Create user profile with the auth user ID
+      const { data: profileData, error: profileError } = await supabase
         .from('users')
         .insert({
           id: authData.user.id,
@@ -142,22 +127,35 @@ export const useAuthStore = defineStore('auth', () => {
           class_id: userData.class,
           class_name: userData.className
         })
+        .select()
 
       if (profileError) throw profileError
 
       return { 
         success: true, 
-        message: 'تم إنشاء الحساب بنجاح! يرجى تأكيد البريد الإلكتروني إذا لزم الأمر.' 
+        message: 'تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.' 
       }
     } catch (error) {
       console.error('Signup error:', error)
       return { 
         success: false, 
-        message: error.message || 'حدث خطأ أثناء إنشاء الحساب' 
+        message: getErrorMessage(error.message) || 'حدث خطأ أثناء إنشاء الحساب' 
       }
     } finally {
       loading.value = false
     }
+  }
+
+  const getErrorMessage = (error) => {
+    if (error?.includes('duplicate key')) {
+      if (error.includes('username')) return 'اسم المستخدم موجود بالفعل'
+      if (error.includes('email')) return 'البريد الإلكتروني موجود بالفعل'
+      if (error.includes('phone')) return 'رقم الهاتف موجود بالفعل'
+      if (error.includes('student_code')) return 'كود الطالب موجود بالفعل'
+      return 'البيانات موجودة بالفعل'
+    }
+    if (error?.includes('User already registered')) return 'البريد الإلكتروني مسجل بالفعل'
+    return error
   }
 
   const logout = async () => {
