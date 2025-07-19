@@ -99,14 +99,21 @@ export const useAuthStore = defineStore('auth', () => {
       loading.value = true
 
       // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .or(`username.eq.${userData.username},student_code.eq.${userData.studentCode},phone.eq.${userData.phone},email.eq.${userData.email}`)
-        .single()
+      try {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .or(`username.eq.${userData.username},student_code.eq.${userData.studentCode},phone.eq.${userData.phone},email.eq.${userData.email}`)
+          .single()
 
-      if (existingUser) {
-        throw new Error('المستخدم موجود بالفعل')
+        if (existingUser) {
+          throw new Error('المستخدم موجود بالفعل')
+        }
+      } catch (error) {
+        // If no existing user found, continue with signup
+        if (!error.message.includes('No rows')) {
+          throw error
+        }
       }
 
       // Create auth user
@@ -116,6 +123,10 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       if (authError) throw authError
+
+      if (!authData.user) {
+        throw new Error('فشل في إنشاء المستخدم')
+      }
 
       // Create user profile
       const { error: profileError } = await supabase
@@ -134,10 +145,16 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (profileError) throw profileError
 
-      return { success: true, message: 'تم إنشاء الحساب بنجاح' }
+      return { 
+        success: true, 
+        message: 'تم إنشاء الحساب بنجاح! يرجى تأكيد البريد الإلكتروني إذا لزم الأمر.' 
+      }
     } catch (error) {
       console.error('Signup error:', error)
-      return { success: false, message: error.message }
+      return { 
+        success: false, 
+        message: error.message || 'حدث خطأ أثناء إنشاء الحساب' 
+      }
     } finally {
       loading.value = false
     }
