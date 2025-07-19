@@ -12,26 +12,36 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
       
-      // Get initial session
-      const { data: { session: initialSession } } = await supabase.auth.getSession()
-      
-      if (initialSession) {
-        session.value = initialSession
-        await fetchUserProfile(initialSession.user.id)
+      // Get initial session with error handling
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession()
+        
+        if (initialSession) {
+          session.value = initialSession
+          await fetchUserProfile(initialSession.user.id)
+        }
+      } catch (sessionError) {
+        console.warn('Could not get initial session:', sessionError)
+        // Continue without session
       }
 
-      // Listen for auth changes
-      supabase.auth.onAuthStateChange(async (event, newSession) => {
-        session.value = newSession
-        
-        if (newSession?.user) {
-          await fetchUserProfile(newSession.user.id)
-        } else {
-          user.value = null
-        }
-      })
+      // Listen for auth changes with error handling
+      try {
+        supabase.auth.onAuthStateChange(async (event, newSession) => {
+          session.value = newSession
+          
+          if (newSession?.user) {
+            await fetchUserProfile(newSession.user.id)
+          } else {
+            user.value = null
+          }
+        })
+      } catch (authError) {
+        console.warn('Could not set up auth listener:', authError)
+      }
     } catch (error) {
-      console.error('Error initializing auth:', error)
+      console.warn('Error initializing auth:', error)
+      // Don't throw error, just log it
     } finally {
       loading.value = false
     }
