@@ -1,109 +1,127 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { supabase } from '../lib/supabase'
 
 export const usePlatformStore = defineStore('platform', () => {
-  const announcements = ref([
-    {
-      id: 1,
-      title: 'إعلان هام: بداية الفصل الدراسي الجديد',
-      content: 'يسعدنا أن نعلن عن بداية الفصل الدراسي الجديد. نتمنى لجميع الطلاب التوفيق والنجاح.',
-      date: '2025-01-15',
-      author: 'إدارة المنصة'
-    },
-    {
-      id: 2,
-      title: 'تحديث المناهج الدراسية',
-      content: 'تم تحديث المناهج الدراسية لتواكب أحدث التطورات في مجال مياه الشرب والصرف الصحي.',
-      date: '2025-01-10',
-      author: 'إدارة المنصة'
-    }
-  ])
+  const announcements = ref([])
+  const classes = ref([])
+  const videos = ref([])
+  const loading = ref(false)
 
-  const classes = ref([
-    {
-      id: 'first-general',
-      name: 'الصف الأول - تخصص عام',
-      description: 'المبادئ الأساسية في هندسة المياه والصرف الصحي',
-      students: 45,
-      videos: [
-        {
-          id: 1,
-          title: 'مقدمة في هندسة المياه',
-          duration: '45:30',
-          uploadDate: '2025-01-10',
-          trainer: 'د. محمد أحمد'
-        },
-        {
-          id: 2,
-          title: 'أساسيات الصرف الصحي',
-          duration: '38:15',
-          uploadDate: '2025-01-08',
-          trainer: 'د. سارة محمود'
-        }
-      ]
-    },
-    {
-      id: 'second-water',
-      name: 'الصف الثاني - تخصص مياه شرب',
-      description: 'تقنيات معالجة وتوزيع مياه الشرب',
-      students: 32,
-      videos: [
-        {
-          id: 3,
-          title: 'عمليات معالجة المياه',
-          duration: '52:20',
-          uploadDate: '2025-01-12',
-          trainer: 'د. أحمد علي'
-        }
-      ]
-    },
-    {
-      id: 'second-sewage',
-      name: 'الصف الثاني - تخصص صرف صحي',
-      description: 'أنظمة جمع ومعالجة مياه الصرف الصحي',
-      students: 28,
-      videos: [
-        {
-          id: 4,
-          title: 'تصميم شبكات الصرف الصحي',
-          duration: '41:45',
-          uploadDate: '2025-01-11',
-          trainer: 'د. فاطمة حسن'
-        }
-      ]
-    },
-    {
-      id: 'third-water',
-      name: 'الصف الثالث - تخصص مياه شرب',
-      description: 'تخصص مياه شرب - المستوى المتقدم',
-      students: 25,
-      videos: []
-    },
-    {
-      id: 'third-sewage',
-      name: 'الصف الثالث - تخصص صرف صحي',
-      description: 'تخصص صرف صحي - المستوى المتقدم',
-      students: 22,
-      videos: []
-    }
-  ])
+  const fetchAnnouncements = async () => {
+    try {
+      loading.value = true
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-  const addAnnouncement = (announcement) => {
-    announcements.value.unshift({
-      id: Date.now(),
-      ...announcement,
-      date: new Date().toISOString().split('T')[0]
-    })
+      if (error) throw error
+      announcements.value = data || []
+    } catch (error) {
+      console.error('Error fetching announcements:', error)
+    } finally {
+      loading.value = false
+    }
   }
 
-  const addVideo = (classId, video) => {
-    const classIndex = classes.value.findIndex(c => c.id === classId)
-    if (classIndex !== -1) {
-      classes.value[classIndex].videos.push({
-        id: Date.now(),
-        ...video,
-        uploadDate: new Date().toISOString().split('T')[0]
-      })
+  const fetchClasses = async () => {
+    try {
+      loading.value = true
+      const { data, error } = await supabase
+        .from('classes')
+        .select(`
+          *,
+          videos (*)
+        `)
+        .order('created_at', { ascending: true })
+
+      if (error) throw error
+      classes.value = data || []
+    } catch (error) {
+      console.error('Error fetching classes:', error)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchVideos = async () => {
+    try {
+      loading.value = true
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      videos.value = data || []
+    } catch (error) {
+      console.error('Error fetching videos:', error)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const addAnnouncement = async (announcement) => {
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .insert(announcement)
+        .select()
+        .single()
+
+      if (error) throw error
+      announcements.value.unshift(data)
+      return { success: true }
+    } catch (error) {
+      console.error('Error adding announcement:', error)
+      return { success: false, message: error.message }
+    }
+  }
+
+  const deleteAnnouncement = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      
+      const index = announcements.value.findIndex(a => a.id === id)
+      if (index !== -1) {
+        announcements.value.splice(index, 1)
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting announcement:', error)
+      return { success: false, message: error.message }
+    }
+  }
+
+  const addVideo = async (video) => {
+    try {
+      const { data, error } = await supabase
+        .from('videos')
+        .insert(video)
+        .select()
+        .single()
+
+      if (error) throw error
+      
+      // Update the class in the classes array
+      const classIndex = classes.value.findIndex(c => c.id === video.class_id)
+      if (classIndex !== -1) {
+        if (!classes.value[classIndex].videos) {
+          classes.value[classIndex].videos = []
+        }
+        classes.value[classIndex].videos.push(data)
+      }
+      
+      return { success: true }
+    } catch (error) {
+      console.error('Error adding video:', error)
+      return { success: false, message: error.message }
     }
   }
 
@@ -113,18 +131,35 @@ export const usePlatformStore = defineStore('platform', () => {
 
   const getVideoById = (id) => {
     for (const cls of classes.value) {
-      const video = cls.videos.find(v => v.id == id)
-      if (video) return video
+      if (cls.videos) {
+        const video = cls.videos.find(v => v.id === id)
+        if (video) return video
+      }
     }
     return null
+  }
+
+  const initializeData = async () => {
+    await Promise.all([
+      fetchAnnouncements(),
+      fetchClasses(),
+      fetchVideos()
+    ])
   }
 
   return {
     announcements,
     classes,
+    videos,
+    loading,
+    fetchAnnouncements,
+    fetchClasses,
+    fetchVideos,
     addAnnouncement,
+    deleteAnnouncement,
     addVideo,
     getClassById,
-    getVideoById
+    getVideoById,
+    initializeData
   }
 })

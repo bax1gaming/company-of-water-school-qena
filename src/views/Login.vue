@@ -194,65 +194,52 @@ import { useAuthStore } from '../stores/auth'
 import { Droplets } from 'lucide-vue-next'
 
 const router = useRouter()
-const authStore = useAuthStore()
+    error.value = ''
+    
+    const result = await authStore.login(identifier.value, password.value)
+    
+    if (result.success) {
+      // Router navigation will be handled by auth state change
+      const user = authStore.user
+      switch (user?.role) {
+        case 'student':
+          router.push('/student')
+          break
+        case 'trainer':
+          router.push('/trainer')
+    error.value = ''
+    success.value = ''
 
-const isSignup = ref(false)
-const identifier = ref('')
-const password = ref('')
-const error = ref('')
-const success = ref('')
-const loading = ref(false)
-
-const signupData = ref({
-  name: '',
-  username: '',
-  studentCode: '',
-  phone: '',
-  email: '',
-  class: '',
-  password: ''
-})
-
-const passwordModel = computed({
-  get() {
-    return isSignup.value ? signupData.value.password : password.value
-  },
-  set(value) {
-    if (isSignup.value) {
-      signupData.value.password = value
+    const userData = {
+      ...signupData.value,
+      className: getClassNameById(signupData.value.class)
+    }
+    
+    const result = await authStore.signup(userData)
+    
+    if (result.success) {
+      success.value = result.message
+      // Reset form
+      signupData.value = {
+        name: '',
+        username: '',
+        studentCode: '',
+        phone: '',
+        email: '',
+        class: '',
+        password: ''
+      }
+      // Switch to login mode after 2 seconds
+      setTimeout(() => {
+        isSignup.value = false
+        success.value = ''
+      }, 2000)
     } else {
-      password.value = value
+      error.value = result.message
     }
   }
 })
 
-const getClassNameById = (classId) => {
-  const classNames = {
-    'first-general': 'الصف الأول - تخصص عام',
-    'second-water': 'الصف الثاني - تخصص مياه شرب',
-    'second-sewage': 'الصف الثاني - تخصص صرف صحي',
-    'third-water': 'الصف الثالث - تخصص مياه شرب',
-    'third-sewage': 'الصف الثالث - تخصص صرف صحي'
-  }
-  return classNames[classId] || ''
-}
-
-const toggleMode = () => {
-  isSignup.value = !isSignup.value
-  error.value = ''
-  success.value = ''
-}
-const handleLogin = async () => {
-  loading.value = true
-  error.value = ''
-
-  try {
-    const loginSuccess = authStore.login(identifier.value, password.value)
-    
-    if (loginSuccess) {
-      const user = authStore.user
-      switch (user.role) {
-        case 'student':
           router.push('/student')
           break
         case 'trainer':

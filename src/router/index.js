@@ -3,7 +3,6 @@ import { useAuthStore } from '../stores/auth'
 
 // Import components
 import Home from '../views/Home.vue'
-import Login from '../views/Login.vue'
 import StudentDashboard from '../views/StudentDashboard.vue'
 import TrainerDashboard from '../views/TrainerDashboard.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
@@ -15,11 +14,6 @@ const routes = [
     path: '/',
     name: 'Home',
     component: Home
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: Login
   },
   {
     path: '/student',
@@ -62,9 +56,22 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login')
-  } else if (to.meta.role && authStore.user?.role !== to.meta.role) {
     next('/')
+  } else if (to.meta.role && authStore.user?.role !== to.meta.role) {
+    // Redirect to appropriate dashboard based on user role
+    switch (authStore.user?.role) {
+      case 'student':
+        next('/student')
+        break
+      case 'trainer':
+        next('/trainer')
+        break
+      case 'admin':
+        next('/admin')
+        break
+      default:
+        next('/')
+    }
   } else {
     next()
   }

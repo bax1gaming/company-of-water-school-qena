@@ -228,7 +228,7 @@ const handleFileSelect = (event) => {
   selectedFile.value = event.target.files[0]
 }
 
-const uploadVideo = () => {
+const uploadVideo = async () => {
   if (uploadMethod.value === 'file' && !selectedFile.value) {
     alert('يرجى اختيار ملف فيديو')
     return
@@ -241,20 +241,24 @@ const uploadVideo = () => {
 
   const video = {
     title: newVideo.value.title,
+    class_id: newVideo.value.classId,
     duration: newVideo.value.duration,
     trainer: authStore.user.name,
     videoUrl: uploadMethod.value === 'url' ? newVideo.value.videoUrl : null,
     fileName: uploadMethod.value === 'file' ? selectedFile.value?.name : null
   }
 
-  platformStore.addVideo(newVideo.value.classId, video)
+  const result = await platformStore.addVideo(video)
   
-  // Reset form
-  newVideo.value = { title: '', classId: '', duration: '', videoUrl: '' }
-  selectedFile.value = null
-  uploadMethod.value = 'file'
-  
-  alert('تم رفع الفيديو بنجاح!')
+  if (result.success) {
+    // Reset form
+    newVideo.value = { title: '', classId: '', duration: '', videoUrl: '' }
+    selectedFile.value = null
+    uploadMethod.value = 'file'
+    alert('تم رفع الفيديو بنجاح!')
+  } else {
+    alert('حدث خطأ أثناء رفع الفيديو')
+  }
 }
 
 const viewClass = (classId) => {
