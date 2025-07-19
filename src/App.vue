@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div v-if="authStore.loading" class="min-h-screen flex items-center justify-center bg-gray-50">
+    <div v-if="loading" class="min-h-screen flex items-center justify-center bg-gray-50">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
         <p class="mt-4 text-gray-600">جاري التحميل...</p>
@@ -12,13 +12,28 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from './stores/auth'
+import { usePlatformStore } from './stores/platform'
 
+const loading = ref(true)
 const authStore = useAuthStore()
+const platformStore = usePlatformStore()
 
 onMounted(async () => {
-  await authStore.initAuth()
+  try {
+    // Initialize auth first
+    await authStore.initAuth()
+    
+    // Initialize platform data if user is authenticated
+    if (authStore.isAuthenticated) {
+      await platformStore.initializeData()
+    }
+  } catch (error) {
+    console.error('Error initializing app:', error)
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 

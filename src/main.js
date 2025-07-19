@@ -4,13 +4,17 @@ import router from './router'
 import App from './App.vue'
 import './style.css'
 
+// Create app instance
 const app = createApp(App)
-const pinia = createPinia()
 
+// Create and use Pinia store
+const pinia = createPinia()
 app.use(pinia)
+
+// Use router
 app.use(router)
 
-// Mount app and handle loading state
+// Mount app
 app.mount('#app')
 
 // Remove loading state after mount

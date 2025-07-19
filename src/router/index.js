@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-// Import components
+// Import views
 import Home from '../views/Home.vue'
+import Login from '../views/Login.vue'
 import StudentDashboard from '../views/StudentDashboard.vue'
 import TrainerDashboard from '../views/TrainerDashboard.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
@@ -14,6 +15,11 @@ const routes = [
     path: '/',
     name: 'Home',
     component: Home
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
   },
   {
     path: '/student',
@@ -56,11 +62,23 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   
+  // Wait for auth to be initialized if it hasn't been yet
+  if (authStore.loading) {
+    await new Promise(resolve => {
+      const unwatch = authStore.$subscribe(() => {
+        if (!authStore.loading) {
+          unwatch()
+          resolve()
+        }
+      })
+    })
+  }
+  
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/')
+    next('/login')
   } else if (to.meta.role && authStore.user?.role !== to.meta.role) {
     // Redirect to appropriate dashboard based on user role
     switch (authStore.user?.role) {
@@ -74,7 +92,7 @@ router.beforeEach((to, from, next) => {
         next('/admin')
         break
       default:
-        next('/')
+        next('/login')
     }
   } else {
     next()
